@@ -1,0 +1,33 @@
+
+{-# STDLIB_VERSION 4 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+let assetId = base58''
+
+@Callable(i)
+func claim() = {
+  let callerAddress = i.caller.toString()
+  let rewardAmountKey = callerAddress + "_reward_amount"
+  let availableAmountKey =  callerAddress + "_available_amount"
+
+  let rewardAmount = this.getIntegerValue(rewardAmountKey)
+  let availableAmount = this.getIntegerValue(availableAmountKey)
+
+  if (rewardAmount == 0) then {
+    throw("You have no reward available.")
+  } else {
+    if (availableAmount == 0) then {
+      throw("You have already claimed your reward.")
+    } else {
+      [
+        IntegerEntry(availableAmountKey, 0),
+        ScriptTransfer(i.caller, availableAmount, assetId)
+      ]
+    }
+  }
+}
+
+@Verifier(tx)
+func verify() = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)
+        
